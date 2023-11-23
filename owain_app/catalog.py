@@ -33,6 +33,8 @@ class Catalog:
         try:
             with open(filepath, 'w') as f:
                 for item in data:
+                    if isinstance(item, set):
+                        item = list(item)  # Convert set to list
                     json.dump(item, f)
                     f.write('\n')
             logger.info(f"Data successfully saved to {filepath}")
@@ -46,8 +48,8 @@ class Catalog:
         test_file = os.path.join(dataset_dir, 'test.jsonl')
 
         return {
-            'train': self._load_jsonl(train_file),
-            'test': self._load_jsonl(test_file)
+            'train': self._load_jsonl(train_file, notation_type),
+            'test': self._load_jsonl(test_file, notation_type)
         }
 
     def data_save(self, data: Dict[str, List[str]], rule_names: List[str], notation_type: str = 'set_notation'):
@@ -60,14 +62,33 @@ class Catalog:
         self._save_jsonl(data['train'], train_file)
         self._save_jsonl(data['test'], test_file)
 
-    def _load_jsonl(self, filepath: str) -> List[str]:
-        with open(filepath, 'r') as file:
-            return [json.loads(line) for line in file]
+    def load_dataset(self, rule_names, notation_type='set_notation'):
+        dataset_name = '_and_'.join(rule_names)
+        dir_path = os.path.join(self.data_path, notation_type, dataset_name)
+        
+        train_file = os.path.join(dir_path, 'train.jsonl')
+        test_file = os.path.join(dir_path, 'test.jsonl')
 
-    def _save_jsonl(self, data: List[str], filepath: str):
-        with open(filepath, 'w') as file:
-            for item in data:
-                json.dump(item, file)
-                file.write('\n')
+        train_data = self._load_jsonl(train_file, notation_type)
+        test_data = self._load_jsonl(test_file, notation_type)
+
+        return {'train': train_data, 'test': test_data}
+
+    def _load_jsonl(self, filepath, notation_type):
+        data = []
+        with open(filepath, 'r') as file:
+            for line in file:
+                item = json.loads(line)
+                if notation_type == 'set_notation':
+                    item = set(item)  # Convert list back to set for set notation
+                data.append(item)
+        return data
+    
+    def save_response(self, response, filename):
+        response_file = os.path.join(self.interaction_path, filename)
+        with open(response_file, 'w') as file:
+            file.write(response)
+        logger.info(f"Response saved to {response_file}")
+
 
     # Additional methods can be added for other stages like interaction results and k-fold validation results.
