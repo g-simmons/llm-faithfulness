@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from owain_app.k_fold_validation import k_fold_cross_validation
 from owain_app.catalog import Catalog
 
+
 @pytest.fixture
 def mock_catalog(mocker):
     # Mock the Catalog class
@@ -12,14 +13,18 @@ def mock_catalog(mocker):
     mock_catalog.save_response = Mock()
     return mock_catalog
 
+
 @pytest.fixture
 def sample_dataset():
     # Create a sample dataset for testing
     return [{"data": "101"}, {"data": "110"}, {"data": "011"}, {"data": "100"}]
 
+
 def test_k_fold_cross_validation(mock_catalog, sample_dataset, mocker):
     # Mock the OpenAI API response
-    mocker.patch('owain_app.k_fold_validation.query_openai_api', return_value="mocked response")
+    mocker.patch(
+        "owain_app.k_fold_validation.query_openai_api", return_value="mocked response"
+    )
 
     # Perform k-fold cross-validation
     k_fold_cross_validation(mock_catalog, sample_dataset, k=2)
