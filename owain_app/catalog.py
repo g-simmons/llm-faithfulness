@@ -1,8 +1,15 @@
 import json
-from typing import List, Dict
+from typing import List, Union
+from owain_app.schemas import Task, ICLPrompt
 
 from loguru import logger
 from pathlib import Path
+from pydantic import BaseModel
+
+
+def iter_validate(iterable, validator):
+    for item in iterable:
+        validator(item)
 
 
 class Catalog:
@@ -12,91 +19,35 @@ class Catalog:
             base_path = Path(__file__).resolve().parent.parent
         self.base_path = base_path
         self.data_path = base_path / "data"
+        self.tasks_path = self.data_path / "tasks/tasks.jsonl"
+        self.icl_prompts_path = self.data_path / "tasks/icl_prompts.jsonl"
         self.figures_path = base_path / "figures"
         self.interaction_path = base_path / "owain_app"
         self.test_path = base_path / "tests"
 
-    def _load_jsonl(self, filepath, notation_type):
-        data = []
-        with open(filepath, "r") as file:
-            for line in file:
-                item = json.loads(line)
-                if notation_type == "set_notation":
-                    item = set(item)  # Convert list back to set for set notation
-                data.append(item)
-        return data
+    def _save_jsonl(self, path: Path, items: list[BaseModel], schema: BaseModel):
+        logger.info(f"Saving {schema.__name__} instances to {path}")
+        logger.info(f"Number of instances: {len(items)}")
+        iter_validate(items, schema)
+        with open(path, "w") as f:
+            for item in items:
+                json.dump(item.dict(), f)
+                f.write("\n")
 
-    def _save_jsonl(self, data, filepath):
-        try:
-            with open(filepath, "w") as f:
-                for item in data:
-                    # Check if the item is a tuple (data, label)
-                    if isinstance(item, tuple):
-                        # Convert sets in the tuple to lists
-                        item = tuple(
-                            list(subitem) if isinstance(subitem, set) else subitem
-                            for subitem in item
-                        )
-                    elif isinstance(item, set):
-                        # Convert single set items to list
-                        item = list(item)
+    def _load_jsonl(self, path: Path, schema: Union[Task, ICLPrompt]):
+        logger.info(f"Loading {schema.__name__} instances from {path}")
+        with open(path, "r") as f:
+            items = [schema(**json.loads(line)) for line in f]
+        return items
 
-                    json.dump(item, f)
-                    f.write("\n")
-            logger.info(f"Data successfully saved to {filepath}")
-        except Exception as e:
-            logger.error(f"Error saving data to {filepath}: {e}")
+    def load_tasks(self) -> list[Task]:
+        self._load_jsonl(self.tasks_path, Task)
 
-    def load_task(self, num_rules, rule_names, notation_type="set_notation"):
-        dataset_name = "_and_".join(rule_names)
-        dir_path = (
-            self.data_path / "tasks" / f"n={num_rules}" / notation_type / dataset_name
-        )
+    def save_tasks(self, tasks: list[Task]):
+        self._save_jsonl(self.tasks_path, tasks, Task)
 
-        train_file = dir_path / "train.jsonl"
-        val_file = dir_path / "val.jsonl"
-        test_file = dir_path / "test.jsonl"
+    def save_icl_prompts(self, prompts: List[ICLPrompt]):
+        self._save_jsonl(self.icl_prompts_path, prompts, ICLPrompt)
 
-        train_data = self._load_jsonl(train_file, notation_type)
-        val_data = self._load_jsonl(val_file, notation_type)
-        test_data = self._load_jsonl(test_file, notation_type)
-
-        logger.info(f"Dataset loaded from {dir_path}")
-        return {"train": train_data, "val": val_data, "test": test_data}
-
-    def save_task(self, dataset, num_rules, dataset_name, notation_type="set_notation"):
-        dir_path = (
-            self.data_path / "tasks" / f"n={num_rules}" / notation_type / dataset_name
-        )
-        dir_path.mkdir(parents=True, exist_ok=True)
-
-        train_file = dir_path / "train.jsonl"
-        val_file = dir_path / "val.jsonl"
-        test_file = dir_path / "test.jsonl"
-
-        self._save_jsonl(dataset["train"], train_file)
-        self._save_jsonl(dataset["val"], val_file)
-        self._save_jsonl(dataset["test"], test_file)
-        logger.info(f"Dataset for {dataset_name} saved in {dir_path}")
-
-    def load_response(self, filename):
-        response_file = self.interaction_path / filename
-        with open(response_file, "r") as file:
-            logger.info(f"Response loaded from {response_file}")
-            return file.read()
-
-    def save_response(self, response, filename):
-        response_file = self.interaction_path / filename
-        with open(response_file, "w") as file:
-            file.write(response)
-        logger.info(f"Response saved to {response_file}")
-
-    def load_prompt(self, filepath):
-        with open(filepath, "r") as file:
-            return file.read()
-
-    def save_response_interaction(self, response, filepath):
-        full_path = self.base_path / filepath
-        with open(full_path, "w") as file:
-            file.write(response)
-        logger.info(f"Response saved to {full_path}")
+    def load_icl_prompts(self) -> List[ICLPrompt]:
+        return self._load_jsonl(self.icl_prompts_path, ICLPrompt)

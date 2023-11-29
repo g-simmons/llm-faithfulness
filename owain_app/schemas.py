@@ -1,13 +1,29 @@
-from pydantic import BaseModel, conint
-from typing import List, Tuple, Optional
+from pydantic import BaseModel, constr, conint
+from enum import Enum
+
+
+class NotationType(str, Enum):
+    string = "string"
+    set = "set"
 
 
 class Rule(BaseModel):
-    index: conint(ge=0)  # Rule index (e.g., 0 for the first rule)
-    value: bool  # Rule value (True or False)
+    rule: callable
+    rule_name: str
 
 
-from pydantic import BaseModel, constr, ValidationError, validator
+class StringNotationTask(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    val_examples: list[str]
+    val_labels: list[bool]
+    test_examples: list[str]
+
+    @property
+    def name(self):
+        return "_".join([rule.rule_name for rule in self.train_rules])
 
 
 class BinaryString(BaseModel):
@@ -18,31 +34,103 @@ class Label(BaseModel):
     value: constr(regex="^[01]$")  # a single 0 or 1
 
 
-class DatasetPartitionerInput(BaseModel):
-    n: conint(ge=1)  # Number of binary digits, must be >= 1
-    rules: List[Rule]  # List of rules
+class ICLPrompt(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    test_example: str
+    prompt: str
 
 
-class DatasetPartitionerOutput(BaseModel):
-    rule_names: List[str]  # Names of the rules used
-    train_dataset_size: int  # Number of examples in the training dataset
-    test_dataset_size: int  # Number of examples in the test dataset
+class ICLPromptMetadata(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    test_example: str
 
 
-class ArticulationInput(BaseModel):
-    prompt: str  # Prompt to be sent to the OpenAI API
-    model: str  # OpenAI model to be used
+class ArticulationPrompt(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    answer_options: list[tuple[Rule]]
+    correct_answer_letters: list[str]
+    prompt: str
 
 
-class ArticulationOutput(BaseModel):
-    response: str  # Response from the OpenAI API
+class ArticulationPromptMetadata(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    answer_options: list[tuple[Rule]]
+    correct_answer_letters: list[str]
 
 
-class KFoldValidationInput(BaseModel):
-    n_splits: conint(gt=1)  # Number of splits for k-fold, greater than 1
-    dataset_size: int  # Size of the dataset to be split
+class PromptMessage(BaseModel):
+    role: str
+    message: str
 
 
-class KFoldValidationOutput(BaseModel):
-    fold_results: List[Tuple[int, float]]  # List of tuples (fold number, accuracy)
-    average_accuracy: Optional[float]  # Average accuracy across all folds
+class ICLPromptRequest(BaseModel):
+    model: str
+    messages: list[PromptMessage]
+    metadata: ICLPromptMetadata
+
+
+class ArticulationPromptRequest(BaseModel):
+    model: str
+    messages: list[PromptMessage]
+    metadata: ArticulationPromptMetadata
+
+
+class OpenAIResponse(BaseModel):
+    choices: list[dict]
+
+
+class ICLPromptResponse(BaseModel):
+    model: str
+    messages: list[PromptMessage]
+    metadata: ICLPromptMetadata
+    response: OpenAIResponse
+
+
+class ArticulationPromptResponse(BaseModel):
+    model: str
+    messages: list[PromptMessage]
+    metadata: ArticulationPromptMetadata
+    response: OpenAIResponse
+
+class ProcessedICLPromptResponse(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    test_example: str
+    prompt: str
+    response: OpenAIResponse
+    model_prediction: str
+    model_confidence: float
+
+class ProcessedArticulationPromptResponse(BaseModel):
+    string_length: conint(ge=1)  # Length of binary strings
+    notation_type: str
+    train_rules: list[Rule]
+    train_examples: list[str]
+    train_labels: list[bool]
+    answer_options: list[tuple[Rule]]
+    correct_answer_letters: list[str]
+    prompt: str
+    response: OpenAIResponse
+    model_prediction_str: str
+    model_prediction_rules: tuple[Rule]
+    model_confidence: float
+

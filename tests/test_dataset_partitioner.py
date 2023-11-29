@@ -1,5 +1,5 @@
 import pytest
-from owain_app.dataset_partitioner import generate_binary_strings, apply_rules
+from owain_app.create_tasks import generate_binary_strings, apply_rules
 
 
 def test_generate_binary_strings():
