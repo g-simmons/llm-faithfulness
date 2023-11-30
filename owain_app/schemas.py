@@ -33,7 +33,7 @@ class Rule(BaseModel):
         arbitrary_types_allowed = True
 
 class Task(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # Length of binary strings # type: ignore
     # train_rules: list[Rule]
     train_rule_names: list[str]
     train_examples: list[str]
@@ -48,7 +48,7 @@ class Task(BaseModel):
 
 
 class ICLPrompt(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
@@ -59,7 +59,7 @@ class ICLPrompt(BaseModel):
 
 
 class ICLPromptMetadata(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
@@ -69,7 +69,7 @@ class ICLPromptMetadata(BaseModel):
 
 
 class ArticulationPrompt(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
@@ -80,7 +80,7 @@ class ArticulationPrompt(BaseModel):
 
 
 class ArticulationPromptMetadata(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
@@ -124,7 +124,7 @@ class ArticulationPromptResponse(BaseModel):
     response: OpenAIResponse
 
 class ProcessedICLPromptResponse(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
@@ -136,7 +136,7 @@ class ProcessedICLPromptResponse(BaseModel):
     model_confidence: float
 
 class ProcessedArticulationPromptResponse(BaseModel):
-    string_length: conint(ge=1)  # Length of binary strings
+    string_length: conint(ge=1)  # type: ignore
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
