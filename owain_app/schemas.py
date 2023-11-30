@@ -7,6 +7,11 @@ class NotationType(str, Enum):
     set = "set"
 
 
+class Split(str, Enum):
+    val = "val"
+    test = "test"
+
+
 class Rule(BaseModel):
     rule: callable
     rule_name: str
@@ -50,6 +55,7 @@ class ICLPrompt(BaseModel):
     train_labels: list[int]
     test_example: str
     prompt: str
+    split: Split
 
 
 class ICLPromptMetadata(BaseModel):
@@ -59,6 +65,7 @@ class ICLPromptMetadata(BaseModel):
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
+    split: Split
 
 
 class ArticulationPrompt(BaseModel):
