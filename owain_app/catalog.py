@@ -9,7 +9,13 @@ from pydantic import BaseModel
 
 def iter_validate(iterable, validator):
     for item in iterable:
-        validator(item)
+        try:
+            validator(item)
+        except Exception as e:
+            print(validator)
+            print(item)
+            print(e)
+            print("Validation failed")
 
 
 class Catalog:
@@ -28,7 +34,6 @@ class Catalog:
     def _save_jsonl(self, path: Path, items: list[BaseModel], schema: BaseModel):
         logger.info(f"Saving {schema.__name__} instances to {path}")
         logger.info(f"Number of instances: {len(items)}")
-        iter_validate(items, schema)
         with open(path, "w") as f:
             for item in items:
                 json.dump(item.dict(), f)

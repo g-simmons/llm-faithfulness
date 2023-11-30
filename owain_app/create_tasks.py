@@ -1,5 +1,6 @@
 import itertools
 import random
+from typing import Union
 from owain_app.schemas import Rule, Task
 from owain_app.catalog import Catalog
 from loguru import logger
@@ -10,11 +11,11 @@ def generate_binary_strings(string_length):
     return ["".join(s) for s in itertools.product("01", repeat=string_length)]
 
 
-def apply_rules(s, rules):
+def apply_rules(s, rules) -> Union[int, None]:
     if all((r(s) for r in rules)):
-        return True
+        return 1
     elif all((not r(s) for r in rules)):
-        return False
+        return 0
     else:
         return None
 
@@ -32,21 +33,24 @@ def convert_to_set_notation(s):
 def get_task_for_rule_combination(
     rule_combination: tuple[Rule], binary_strings: list[str]
 ) -> Task:
-    train_examples = [
-        s
+    assert set([len(x) for x in binary_strings]) == {len(binary_strings[0])}
+    train_examples_labels = [
+        (s, apply_rules(s, rule_combination))
         for s in binary_strings
-        if apply_rules(s, rule_combination) is True
-        or apply_rules(s, rule_combination) is False
+        if apply_rules(s, rule_combination) is 1
+        or apply_rules(s, rule_combination) is 0
     ]
+    train_examples, train_labels = zip(*train_examples_labels)
     test_examples = [
         s for s in binary_strings if apply_rules(s, rule_combination) is None
     ]
 
     return Task(
-        train_rules=rule_combination,
+        train_rule_names=[r.rule_name for r in rule_combination],
         train_examples=train_examples,
-        train_labels=[apply_rules(s, rule_combination) for s in binary_strings],
+        train_labels=train_labels,
         test_examples=test_examples,
+        string_length=len(binary_strings[0]),
     )
 
 
@@ -58,12 +62,13 @@ def train_val_split(task: Task, val_pct: float) -> Task:
     val_labels = task.train_labels[train_val_split_index:]
 
     return Task(
-        train_rules=task.train_rules,
+        train_rule_names=task.train_rule_names,
         train_examples=train_examples,
         train_labels=train_labels,
         val_examples=val_examples,
         val_labels=val_labels,
         test_examples=task.test_examples,
+        string_length=task.string_length,
     )
 
 

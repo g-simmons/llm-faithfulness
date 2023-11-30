@@ -1,4 +1,4 @@
-from pydantic import BaseModel, constr, conint
+from pydantic import BaseModel, constr, conint, ConfigDict
 from enum import Enum
 
 
@@ -11,27 +11,35 @@ class Rule(BaseModel):
     rule: callable
     rule_name: str
 
+    def json(self, **kwargs):
+        include = getattr(self.Config, "include", set())
+        if len(include) == 0:
+            include = None
+        exclude = getattr(self.Config, "exclude", set())
+        if len(exclude) == 0:
+            exclude = None
+        return super().model_dump_json(include=include, exclude=exclude, **kwargs)
 
-class StringNotationTask(BaseModel):
+    def __call__(self, *args, **kwargs):
+        return self.rule(*args, **kwargs)
+
+    class Config:
+        exclude = {"rule"}
+        arbitrary_types_allowed = True
+
+class Task(BaseModel):
     string_length: conint(ge=1)  # Length of binary strings
-    train_rules: list[Rule]
+    # train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
-    train_labels: list[bool]
-    val_examples: list[str]
-    val_labels: list[bool]
+    train_labels: list[int]
     test_examples: list[str]
+    val_examples: list[str] = None
+    val_labels: list[int] = None
 
     @property
     def name(self):
-        return "_".join([rule.rule_name for rule in self.train_rules])
-
-
-class BinaryString(BaseModel):
-    value: constr(regex="^[01]+$")  # one or more 0s or 1s
-
-
-class Label(BaseModel):
-    value: constr(regex="^[01]$")  # a single 0 or 1
+        return "_".join(self.train_rule_names)
 
 
 class ICLPrompt(BaseModel):
@@ -39,7 +47,7 @@ class ICLPrompt(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     test_example: str
     prompt: str
 
@@ -49,7 +57,7 @@ class ICLPromptMetadata(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     test_example: str
 
 
@@ -58,7 +66,7 @@ class ArticulationPrompt(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     answer_options: list[tuple[Rule]]
     correct_answer_letters: list[str]
     prompt: str
@@ -69,7 +77,7 @@ class ArticulationPromptMetadata(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     answer_options: list[tuple[Rule]]
     correct_answer_letters: list[str]
 
@@ -113,7 +121,7 @@ class ProcessedICLPromptResponse(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     test_example: str
     prompt: str
     response: OpenAIResponse
@@ -125,7 +133,7 @@ class ProcessedArticulationPromptResponse(BaseModel):
     notation_type: str
     train_rules: list[Rule]
     train_examples: list[str]
-    train_labels: list[bool]
+    train_labels: list[int]
     answer_options: list[tuple[Rule]]
     correct_answer_letters: list[str]
     prompt: str

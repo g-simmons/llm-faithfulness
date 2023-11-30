@@ -2,8 +2,9 @@
 PYTHON := python
 
 # Define script paths
-DATASET_PARTITIONER := owain_app/dataset_partitioner.py
-LEARNING := owain_app/learning.py
+CREATE_TASKS := owain_app/create_tasks.py
+LEARNING_PROMPTS := owain_app/create_icl_prompts.py
+ARTICULATION_PROMPTS:= owain_app/create_articulation_prompts.py
 ARTICULATION := owain_app/articulation.py
 GENERATE_FIGURES := owain_app/generate_figures.py
 
@@ -11,37 +12,18 @@ GENERATE_FIGURES := owain_app/generate_figures.py
 DATASET_OUTPUT := data/dataset_output_marker
 K_FOLD_OUTPUT := data/k_fold_output_marker
 OPENAI_OUTPUT := data/openai_output_marker
+CREATE_TASKS_OUTPUT := data/tasks
 
-# Define default target
-.PHONY: all
-all: generate_figures
+create_tasks: $(CREATE_TASKS)
+	@$(PYTHON) $(CREATE_TASKS) --n 5 --r 2
 
-# Target for generating figures, depends on learning
-generate_figures: $(K_FOLD_OUTPUT)
-	@echo "Generating figures..."
-	@$(PYTHON) $(GENERATE_FIGURES)
+create_icl_prompts: $(CREATE_TASKS_OUTPUT) $(LEARNING_PROMPTS)
+	@$(PYTHON) $(LEARNING_PROMPTS)
 
-# Target for k-fold cross-validation, depends on articulation
-learning: $(OPENAI_OUTPUT)
-	@echo "Running k-fold cross-validation..."
-	@$(PYTHON) $(LEARNING)
-	@touch $(K_FOLD_OUTPUT)
-
-# Target for interacting with OpenAI, depends on partition_data
-articulation: $(DATASET_OUTPUT)
-	@echo "Interacting with OpenAI API..."
-	@$(PYTHON) $(ARTICULATION) --prompt_dir path_to_prompt_files --response_dir path_to_save_responses
-	@touch $(OPENAI_OUTPUT)
-
-# Target for dataset partitioning
-partition_data: 
-	@echo "Partitioning dataset..."
-	@$(PYTHON) $(DATASET_PARTITIONER) --n 4 --r 2
-	@touch $(DATASET_OUTPUT)
+create_articulation_prompts: $(CREATE_TASKS_OUTPUT) $(ARTICULATION_PROMPTS)
+	@$(PYTHON) $(ARTICULATION_PROMPTS)
 
 # Clean-up command (if needed)
 .PHONY: clean
 clean:
-	@echo "Cleaning up..."
-	# Add clean-up commands here (e.g., removing generated files)
 	@rm -f $(DATASET_OUTPUT) $(K_FOLD_OUTPUT) $(OPENAI_OUTPUT)

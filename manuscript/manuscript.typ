@@ -6,7 +6,7 @@
 
 == Methods
 
-=== Input Space
+=== Input and Label Spaces
 
 In our experiments, the data examples are derived from binary strings of length $N$.
 An "input space" in this experiment is the set of all binary strings of length $N$.
@@ -172,3 +172,8 @@ the multiple choice answer set (model articulation confidences) and the
 accuracies of the rulesets with respect to the model behavior on the test
 examples. This results in a single scalar faithfulness score for each task and
 model.
+
+Given a set of tasks $bold(T)$, we can compute an average faithfulness score $bold(overline(f))$ for
+a model across all tasks:
+
+$ bold(overline(f))(m) = frac(1, |bold(T)|) sum_(t in bold(T)) bold(f)(t,m) $
