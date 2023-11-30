@@ -10,16 +10,27 @@ EXAMPLE_TEMPlATE = "input: {input}; label: {label}"
 INSTRUCTIONS = "Classify the unlabeled example from the labeled examples. Respond with a single binary digit indicating the label."
 
 
+def format_train_examples(
+    train_examples: List[str], train_labels: List[int], example_template: str
+):
+    example_content = [
+        example_template.format(input=x, label=y)
+        for x, y in zip(train_examples, train_labels)
+    ]
+    example_content = "\n".join(example_content)
+    return example_content
+
+
 def make_icl_prompt(
-    train_examples: List[Tuple],
+    train_examples: List[str],
+    train_labels: List[int],
     test_example: str,
     example_template: str = EXAMPLE_TEMPlATE,
     instructions: str = INSTRUCTIONS,
 ):
-    example_content = [
-        example_template.format(input=x, label=y) for x, y in train_examples
-    ]
-    example_content = "\n".join(example_content)
+    example_content = format_train_examples(
+        train_examples, train_labels, example_template
+    )
     test_content = example_template.format(input=test_example, label="")
 
     return (
@@ -32,16 +43,35 @@ def make_icl_prompt(
 
 
 def task_to_icl_prompts(task: Task) -> List[ICLPrompt]:
-    prompts = [
-        make_icl_prompt(
-            train_examples=[
-                (s, str(int(l))) for s, l in zip(task.train_examples, task.train_labels)
-            ],
-            test_example=test_example,
-        )
-        for test_example in task.test_examples
-    ]
-    return prompts
+    all_prompts = []
+    for examples, split_name in zip(
+        [task.val_examples, task.test_examples],
+        ["val", "test"],
+    ):
+        prompts = [
+            make_icl_prompt(
+                train_examples=task.train_examples,
+                train_labels=task.train_labels,
+                test_example=test_example,
+            )
+            for test_example in examples
+        ]
+        prompts = [
+            ICLPrompt(
+                string_length=task.string_length,
+                notation_type=task.notation_type,
+                train_rule_names=task.train_rule_names,
+                train_examples=task.train_examples,
+                train_labels=task.train_labels,
+                test_example=test_example,
+                prompt=prompt,
+                split=split_name,
+            )
+            for test_example, prompt in zip(examples, prompts)
+        ]
+        all_prompts.extend(prompts)
+
+    return all_prompts
 
 
 @click.command()
@@ -53,7 +83,7 @@ def main():
     for task in tasks:
         prompts.extend(task_to_icl_prompts(task))
 
-    catalog.save_prompts(prompts)
+    catalog.save_icl_prompts(prompts)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, constr, conint, ConfigDict
+from pydantic import BaseModel
+from typing import Optional, Callable
 from enum import Enum
 
 
@@ -13,7 +14,7 @@ class Split(str, Enum):
 
 
 class Rule(BaseModel):
-    rule: callable
+    rule: Callable
     rule_name: str
 
     def json(self, **kwargs):
@@ -32,15 +33,17 @@ class Rule(BaseModel):
         exclude = {"rule"}
         arbitrary_types_allowed = True
 
+
 class Task(BaseModel):
+    notation_type: NotationType
     string_length: conint(ge=1)  # Length of binary strings # type: ignore
     # train_rules: list[Rule]
     train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     test_examples: list[str]
-    val_examples: list[str] = None
-    val_labels: list[int] = None
+    val_examples: Optional[list[str]] = None
+    val_labels: Optional[list[int]] = None
 
     @property
     def name(self):
@@ -50,7 +53,7 @@ class Task(BaseModel):
 class ICLPrompt(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
@@ -61,7 +64,7 @@ class ICLPrompt(BaseModel):
 class ICLPromptMetadata(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
@@ -71,18 +74,21 @@ class ICLPromptMetadata(BaseModel):
 class ArticulationPrompt(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
-    answer_options: list[tuple[Rule]]
+    answer_options: list[str]
+    answer_option_rule_names: list[tuple[str, ...]]
     correct_answer_letters: list[str]
+    incorrect_answer_letters: list[str]
     prompt: str
 
 
 class ArticulationPromptMetadata(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    # train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     answer_options: list[tuple[Rule]]
@@ -126,26 +132,28 @@ class ArticulationPromptResponse(BaseModel):
 class ProcessedICLPromptResponse(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    # train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
     prompt: str
     response: OpenAIResponse
-    model_prediction: str
-    model_confidence: float
+    prediction: str
+    confidence: float
+
 
 class ProcessedArticulationPromptResponse(BaseModel):
     string_length: conint(ge=1)  # type: ignore
     notation_type: str
-    train_rules: list[Rule]
+    # train_rules: list[Rule]
+    train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
     answer_options: list[tuple[Rule]]
     correct_answer_letters: list[str]
     prompt: str
     response: OpenAIResponse
-    model_prediction_str: str
-    model_prediction_rules: tuple[Rule]
-    model_confidence: float
-
+    prediction_str: str
+    prediction_rules: tuple[Rule]
+    confidence: float

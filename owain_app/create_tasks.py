@@ -37,8 +37,8 @@ def get_task_for_rule_combination(
     train_examples_labels = [
         (s, apply_rules(s, rule_combination))
         for s in binary_strings
-        if apply_rules(s, rule_combination) is 1
-        or apply_rules(s, rule_combination) is 0
+        if apply_rules(s, rule_combination) == 1
+        or apply_rules(s, rule_combination) == 0
     ]
     train_examples, train_labels = zip(*train_examples_labels)
     test_examples = [
@@ -46,6 +46,7 @@ def get_task_for_rule_combination(
     ]
 
     return Task(
+        notation_type="string",
         train_rule_names=[r.rule_name for r in rule_combination],
         train_examples=train_examples,
         train_labels=train_labels,
@@ -62,6 +63,7 @@ def train_val_split(task: Task, val_pct: float) -> Task:
     val_labels = task.train_labels[train_val_split_index:]
 
     return Task(
+        notation_type=task.notation_type,
         train_rule_names=task.train_rule_names,
         train_examples=train_examples,
         train_labels=train_labels,
@@ -84,6 +86,7 @@ def get_all_rules(string_length):
 
 def convert_to_set_notation(string_notation_task: Task) -> Task:
     return Task(
+        notation_type="set",
         train_rules=string_notation_task.train_rules,
         train_examples=[
             convert_to_set_notation(s) for s in string_notation_task.train_examples
