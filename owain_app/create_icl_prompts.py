@@ -1,8 +1,6 @@
-import click
 from owain_app.catalog import Catalog
-from loguru import logger
 
-from owain_app.schemas import Task, ICLPrompt
+from owain_app.schemas import Task, ICLPrompt, Split
 from typing import List, Tuple
 
 
@@ -44,9 +42,13 @@ def make_icl_prompt(
 
 def task_to_icl_prompts(task: Task) -> List[ICLPrompt]:
     all_prompts = []
-    for examples, split_name in zip(
+    assert task.val_examples is not None
+    test_labels = [None]*len(task.test_examples) #type: list[int|None]
+    assert test_labels is not None
+    for examples, labels, split_name in zip(
         [task.val_examples, task.test_examples],
-        ["val", "test"],
+        [task.val_labels, test_labels],
+        [Split.val, Split.test],
     ):
         prompts = [
             make_icl_prompt(
@@ -64,17 +66,17 @@ def task_to_icl_prompts(task: Task) -> List[ICLPrompt]:
                 train_examples=task.train_examples,
                 train_labels=task.train_labels,
                 test_example=test_example,
+                test_label=test_label,
                 prompt=prompt,
                 split=split_name,
             )
-            for test_example, prompt in zip(examples, prompts)
+            for test_example, test_label, prompt in zip(examples, labels, prompts) #type: ignore
         ]
         all_prompts.extend(prompts)
 
     return all_prompts
 
 
-@click.command()
 def main():
     # Initialize Catalog
     catalog = Catalog()  # Assuming Catalog is set up with the correct base_path

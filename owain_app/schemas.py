@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, conint
 from typing import Optional, Callable
 from enum import Enum
 
@@ -37,7 +37,6 @@ class Rule(BaseModel):
 class Task(BaseModel):
     notation_type: NotationType
     string_length: conint(ge=1)  # Length of binary strings # type: ignore
-    # train_rules: list[Rule]
     train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
@@ -57,6 +56,7 @@ class ICLPrompt(BaseModel):
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
+    test_label: Optional[int] = None
     prompt: str
     split: Split
 
@@ -68,6 +68,7 @@ class ICLPromptMetadata(BaseModel):
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
+    test_label: Optional[int] = None
     split: Split
 
 
@@ -91,43 +92,41 @@ class ArticulationPromptMetadata(BaseModel):
     train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
-    answer_options: list[tuple[Rule]]
+    answer_options: list[str]
+    answer_option_rule_names: list[tuple[str, ...]]
     correct_answer_letters: list[str]
 
 
 class PromptMessage(BaseModel):
     role: str
-    message: str
+    content: str
 
 
 class ICLPromptRequest(BaseModel):
     model: str
+    max_tokens: int
     messages: list[PromptMessage]
     metadata: ICLPromptMetadata
 
 
 class ArticulationPromptRequest(BaseModel):
     model: str
+    max_tokens: int
     messages: list[PromptMessage]
     metadata: ArticulationPromptMetadata
 
-
-class OpenAIResponse(BaseModel):
-    choices: list[dict]
 
 
 class ICLPromptResponse(BaseModel):
-    model: str
-    messages: list[PromptMessage]
+    input: dict
+    output: dict
     metadata: ICLPromptMetadata
-    response: OpenAIResponse
 
 
 class ArticulationPromptResponse(BaseModel):
-    model: str
-    messages: list[PromptMessage]
+    input: dict
+    output: dict
     metadata: ArticulationPromptMetadata
-    response: OpenAIResponse
 
 class ProcessedICLPromptResponse(BaseModel):
     string_length: conint(ge=1)  # type: ignore
@@ -137,10 +136,11 @@ class ProcessedICLPromptResponse(BaseModel):
     train_examples: list[str]
     train_labels: list[int]
     test_example: str
+    test_label: Optional[int] = None
     prompt: str
-    response: OpenAIResponse
     prediction: str
-    confidence: float
+    model: str
+    split: Split
 
 
 class ProcessedArticulationPromptResponse(BaseModel):
@@ -150,10 +150,11 @@ class ProcessedArticulationPromptResponse(BaseModel):
     train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
-    answer_options: list[tuple[Rule]]
+    split: Split
+    answer_options: list[str]
+    answer_option_rule_names: list[tuple[str, ...]]
     correct_answer_letters: list[str]
     prompt: str
-    response: OpenAIResponse
     prediction_str: str
     prediction_rules: tuple[Rule]
     confidence: float

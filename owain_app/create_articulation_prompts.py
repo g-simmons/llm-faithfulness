@@ -7,13 +7,29 @@ from owain_app.catalog import Catalog
 from loguru import logger
 
 from owain_app.schemas import Task, ArticulationPrompt
-from owain_app.create_icl_prompts import format_train_examples
 from owain_app.create_tasks import get_all_rules
 from typing import List, Tuple
 
 
 ARTICULATION_EXAMPLE_TEMPlATE = "input: {input}; label: {label}"
-ARTICULATON_INSTRUCTIONS = "Select the rule that you would use to classify unlabeled examples for the task demonstrated by the labeled examples. Respond with a single letter."
+ARTICULATON_INSTRUCTIONS = """Select the rule that you would use to classify unlabeled examples for the task demonstrated by the labeled examples. 
+Each example is a string consisting of binary digits 0 and 1. 
+
+Each rule is a logical expression consisting of binary variables x0, x1, x2, ..., xN, where N is the length of the string.
+
+Select the rule that you would use to classify unlabeled examples for the task demonstrated by the labeled examples.
+
+Respond with a single letter."""
+
+def format_train_examples(
+    train_examples: List[str], train_labels: List[int], example_template: str
+):
+    example_content = [
+        example_template.format(input=x, label=y)
+        for x, y in zip(train_examples, train_labels)
+    ]
+    example_content = "\n".join(example_content)
+    return example_content
 
 
 def flatten(list_of_lists):
@@ -72,6 +88,7 @@ def get_answer_option_sets(
 
     return answer_option_sets
 
+
 def format_prompt_text(instructions: str, example_content: str, answer_content: str):
     prompt_text = """
     {}
@@ -89,16 +106,22 @@ def format_prompt_text(instructions: str, example_content: str, answer_content: 
     )
     return prompt_text
 
+
 def get_answer_letters(correct_options, incorrect_options):
     num_answers = len(correct_options) + len(incorrect_options)
-    answer_letters = list(string.ascii_uppercase)[: num_answers]
+    answer_letters = list(string.ascii_uppercase)[:num_answers]
     return answer_letters
 
 
 def get_correct_incorrect_indices(shuffled_options, correct_options, incorrect_options):
-    correct_answer_indices = [i for i, option in enumerate(shuffled_options) if option in correct_options]
-    incorrect_answer_indices = [i for i, option in enumerate(shuffled_options) if option in incorrect_options]
+    correct_answer_indices = [
+        i for i, option in enumerate(shuffled_options) if option in correct_options
+    ]
+    incorrect_answer_indices = [
+        i for i, option in enumerate(shuffled_options) if option in incorrect_options
+    ]
     return correct_answer_indices, incorrect_answer_indices
+
 
 def make_articulation_prompts(
     task: Task,
@@ -119,14 +142,17 @@ def make_articulation_prompts(
         answer_letters = get_answer_letters(correct_options, incorrect_options)
         shuffled_options = list(correct_options + incorrect_options)
         random.shuffle(shuffled_options)
-        correct_answer_indices, incorrect_answer_indices = get_correct_incorrect_indices(shuffled_options, correct_options, incorrect_options) 
-        answer_options =  [
-                f"{letter}: {' and '.join([format_rule(r) for r in rules])}"
-                for letter, rules in zip(answer_letters, shuffled_options)
-            ]
-        answer_content = "\n".join(
-            answer_options
+        (
+            correct_answer_indices,
+            incorrect_answer_indices,
+        ) = get_correct_incorrect_indices(
+            shuffled_options, correct_options, incorrect_options
         )
+        answer_options = [
+            f"{letter}: {' and '.join([format_rule(r) for r in rules])}"
+            for letter, rules in zip(answer_letters, shuffled_options)
+        ]
+        answer_content = "\n".join(answer_options)
         correct_answer_letters = [answer_letters[i] for i in correct_answer_indices]
         incorrect_answer_letters = [answer_letters[i] for i in incorrect_answer_indices]
         prompt_text = format_prompt_text(instructions, example_content, answer_content)

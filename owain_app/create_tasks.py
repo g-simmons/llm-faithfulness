@@ -1,9 +1,10 @@
 import itertools
 import random
 from typing import Union
-from owain_app.schemas import Rule, Task
+from owain_app.schemas import Rule, Task, NotationType
 from owain_app.catalog import Catalog
 from loguru import logger
+from sklearn.model_selection import train_test_split
 import click
 
 
@@ -12,13 +13,17 @@ def generate_binary_strings(string_length):
 
 
 def apply_rules(s, rules) -> Union[int, None]:
-    if all((r(s) for r in rules)):
+    if all([r(s) for r in rules]):
         return 1
-    elif all((not r(s) for r in rules)):
+    elif all([(not r(s)) for r in rules]):
         return 0
     else:
         return None
 
+def get_rule_by_rule_name(rule_name: str) -> Rule:
+    rules = get_all_rules(string_length=20)
+    rule = [r for r in rules if r.rule_name == rule_name][0]
+    return rule
 
 def convert_to_set_notation(s):
     if len(s) > 20:
@@ -37,30 +42,36 @@ def get_task_for_rule_combination(
     train_examples_labels = [
         (s, apply_rules(s, rule_combination))
         for s in binary_strings
-        if apply_rules(s, rule_combination) == 1
-        or apply_rules(s, rule_combination) == 0
+        if (
+            (apply_rules(s, rule_combination) is 1)  # ignore the SyntaxWarning here
+            or (apply_rules(s, rule_combination) is 0)
+        )  # ignore the SyntaxWarning here
     ]
+
     train_examples, train_labels = zip(*train_examples_labels)
     test_examples = [
         s for s in binary_strings if apply_rules(s, rule_combination) is None
     ]
+    train_examples = list(str(x) for x in train_examples)
+    train_labels = list(int(x) for x in train_labels)  # type: ignore
 
     return Task(
-        notation_type="string",
+        notation_type=NotationType.string,
         train_rule_names=[r.rule_name for r in rule_combination],
-        train_examples=train_examples,
-        train_labels=train_labels,
+        train_examples=list(train_examples),
+        train_labels=list(train_labels),
         test_examples=test_examples,
         string_length=len(binary_strings[0]),
     )
 
 
 def train_val_split(task: Task, val_pct: float) -> Task:
-    train_val_split_index = int(len(task.train_examples) * (1 - val_pct))
-    train_examples = task.train_examples[:train_val_split_index]
-    train_labels = task.train_labels[:train_val_split_index]
-    val_examples = task.train_examples[train_val_split_index:]
-    val_labels = task.train_labels[train_val_split_index:]
+    train_examples, val_examples, train_labels, val_labels = train_test_split(
+        task.train_examples,
+        task.train_labels,
+        test_size=val_pct,
+        random_state=42,
+    )
 
     return Task(
         notation_type=task.notation_type,
@@ -84,22 +95,22 @@ def get_all_rules(string_length):
     return rules
 
 
-def convert_to_set_notation(string_notation_task: Task) -> Task:
-    return Task(
-        notation_type="set",
-        train_rules=string_notation_task.train_rules,
-        train_examples=[
-            convert_to_set_notation(s) for s in string_notation_task.train_examples
-        ],
-        train_labels=string_notation_task.train_labels,
-        val_examples=[
-            convert_to_set_notation(s) for s in string_notation_task.val_examples
-        ],
-        val_labels=string_notation_task.val_labels,
-        test_examples=[
-            convert_to_set_notation(s) for s in string_notation_task.test_examples
-        ],
-    )
+# def convert_to_set_notation(string_notation_task: Task) -> Task:
+#     return Task(
+#         notation_type="set",
+#         train_rules=string_notation_task.train_rules,
+#         train_examples=[
+#             convert_to_set_notation(s) for s in string_notation_task.train_examples
+#         ],
+#         train_labels=string_notation_task.train_labels,
+#         val_examples=[
+#             convert_to_set_notation(s) for s in string_notation_task.val_examples
+#         ],
+#         val_labels=string_notation_task.val_labels,
+#         test_examples=[
+#             convert_to_set_notation(s) for s in string_notation_task.test_examples
+#         ],
+#     )
 
 
 @click.command()
