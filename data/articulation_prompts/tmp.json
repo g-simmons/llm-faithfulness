@@ -1,0 +1,66 @@
+{
+    "string_length": 5,
+    "notation_type": "string",
+    "train_rule_names": [
+        "rule0",
+        "rule1"
+    ],
+    "train_examples": [
+        "11101",
+        "11011",
+        "11000",
+        "11001",
+        "00010",
+        "11111",
+        "00100",
+        "00111",
+        "11010",
+        "11100",
+        "00011",
+        "00110"
+    ],
+    "train_labels": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0
+    ],
+    "answer_options": [
+        "A: x1 == 1",
+        "B: x0 == 1 and x1 == 1",
+        "C: x2 == 1",
+        "D: x0 == 1"
+    ],
+    "answer_option_rule_names": [
+        [
+            "rule1"
+        ],
+        [
+            "rule0",
+            "rule1"
+        ],
+        [
+            "rule2"
+        ],
+        [
+            "rule0"
+        ]
+    ],
+    "correct_answer_letters": [
+        "B"
+    ],
+    "incorrect_answer_letters": [
+        "A",
+        "C",
+        "D"
+    ],
+    "prompt": "\n    Select the rule that you would use to classify unlabeled examples for the task demonstrated by the labeled examples. \nEach example is a string consisting of binary digits 0 and 1. \n\nEach rule is a logical expression consisting of binary variables x0, x1, x2, ..., xN, where N is the length of the string.\n\nSelect the rule that you would use to classify unlabeled examples for the task demonstrated by the labeled examples.\n\nRespond with a single letter.\n    \n    Labeled Examples:\n    ```\n    input: 11101; label: 1\ninput: 11011; label: 1\ninput: 11000; label: 1\ninput: 11001; label: 1\ninput: 00010; label: 0\ninput: 11111; label: 1\ninput: 00100; label: 0\ninput: 00111; label: 0\ninput: 11010; label: 1\ninput: 11100; label: 1\ninput: 00011; label: 0\ninput: 00110; label: 0\n    ```\n\n    Answer Options:\n    ```\n    A: x1 == 1\nB: x0 == 1 and x1 == 1\nC: x2 == 1\nD: x0 == 1\n    ```"
+}

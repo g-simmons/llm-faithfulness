@@ -8,6 +8,7 @@ ARTICULATION_PROMPTS:= owain_app/create_articulation_prompts.py
 CONVERT_ICL_PROMPTS := owain_app/convert_icl_prompts.py
 CONVERT_ARTICULATION_PROMPTS := owain_app/convert_articulation_prompts.py
 PROCESS_ICL_RESPONSES := owain_app/process_icl_responses.py
+PROCESS_ARTICULATION_RESPONSES := owain_app/process_articulation_responses.py
 API_REQUESTOR := owain_app/api_request_parallel_processor.py
 GENERATE_FIGURES := owain_app/generate_figures.py
 
@@ -15,8 +16,10 @@ GENERATE_FIGURES := owain_app/generate_figures.py
 CREATE_TASKS_OUTPUT := data/tasks
 ICL_PROMPTS_OUTPUT := data/icl_prompts
 ICL_REQUESTS_OUTPUT := data/icl_requests
+ARTICULATION_REQUESTS_OUTPUT := data/articulation_requests
 ARTICULATION_PROMPTS_OUTPUT := data/articulation_prompts
 ICL_RESPONSES_OUTPUT := data/icl_responses
+ARTICULATION_RESPONSES_OUTPUT := data/articulation_responses
 
 create_tasks: $(CREATE_TASKS)
 	@$(PYTHON) $(CREATE_TASKS) --n 5 --r 2
@@ -44,8 +47,22 @@ create_articulation_prompts: $(CREATE_TASKS_OUTPUT) $(ARTICULATION_PROMPTS)
 convert_articulation_prompts: $(ARTICULATION_PROMPTS_OUTPUT) $(ARTICULATION)
 	@$(PYTHON) $(CONVERT_ARTICULATION_PROMPTS)
 
+collect_articulation_responses: $(ARTICULATION_REQUESTS_OUTPUT) $(API_REQUESTOR)
+	mkdir -p data/articulation_responses
+	@poetry run python owain_app/api_request_parallel_processor.py --requests_filepath $(ARTICULATION_REQUESTS_OUTPUT)/articulation_requests.jsonl \
+		--save_filepath data/articulation_responses/articulation_responses.jsonl \
+		--request_url 'https://api.openai.com/v1/chat/completions' \
+		--max_requests_per_minute 10000 \
+		--max_tokens_per_minute 300000 \
+		--token_encoding_name cl100k_base \
+		--max_attempts 5 \
+		--logging_level 10
+
 process_icl_responses: $(ICL_RESPONSES_OUTPUT) $(PROCESS_ICL_RESPONSES)
 	@$(PYTHON) $(PROCESS_ICL_RESPONSES)
+
+process_articulation_responses: $(ARTICULATION_RESPONSES_OUTPUT) $(PROCESS_ARTICULATION_RESPONSES)
+	@$(PYTHON) $(PROCESS_ARTICULATION_RESPONSES)
 
 # Clean-up command (if needed)
 .PHONY: clean

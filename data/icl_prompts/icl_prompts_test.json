@@ -1,0 +1,39 @@
+{
+    "string_length": 5,
+    "notation_type": "string",
+    "train_rule_names": [
+        "rule0",
+        "rule1"
+    ],
+    "train_examples": [
+        "11101",
+        "11011",
+        "11000",
+        "11001",
+        "00010",
+        "11111",
+        "00100",
+        "00111",
+        "11010",
+        "11100",
+        "00011",
+        "00110"
+    ],
+    "train_labels": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0
+    ],
+    "test_example": "00000",
+    "prompt": "Classify the unlabeled example from the labeled examples. Respond with a single binary digit indicating the label.\n\nLabeled Examples:\n```\ninput: 11101; label: 1\ninput: 11011; label: 1\ninput: 11000; label: 1\ninput: 11001; label: 1\ninput: 00010; label: 0\ninput: 11111; label: 1\ninput: 00100; label: 0\ninput: 00111; label: 0\ninput: 11010; label: 1\ninput: 11100; label: 1\ninput: 00011; label: 0\ninput: 00110; label: 0\n```\n\nUnlabeled Example:\n```\ninput: 00000; label: ",
+    "split": "val"
+}

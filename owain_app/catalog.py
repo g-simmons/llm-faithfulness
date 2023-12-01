@@ -118,4 +118,4 @@ class Catalog:
         return self._load_jsonl(self.icl_responses_path, ICLPromptResponse, lambda x: {"input": x[0],"output":x[1],"metadata":x[2]})  # type: ignore
 
     def load_articulation_responses(self) -> List[ArticulationPromptResponse]:
-        return self._load_jsonl(self.articulation_responses_path, ArticulationPromptResponse) # type: ignore
+        return self._load_jsonl(self.articulation_responses_path, ArticulationPromptResponse, lambda x: {"input": x[0],"output":x[1],"metadata":x[2]}) # type: ignore

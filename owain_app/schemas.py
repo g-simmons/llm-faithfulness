@@ -83,6 +83,7 @@ class ArticulationPrompt(BaseModel):
     correct_answer_letters: list[str]
     incorrect_answer_letters: list[str]
     prompt: str
+    # split: Split
 
 
 class ArticulationPromptMetadata(BaseModel):
@@ -95,6 +96,7 @@ class ArticulationPromptMetadata(BaseModel):
     answer_options: list[str]
     answer_option_rule_names: list[tuple[str, ...]]
     correct_answer_letters: list[str]
+    # split: Split
 
 
 class PromptMessage(BaseModel):
@@ -114,6 +116,7 @@ class ArticulationPromptRequest(BaseModel):
     max_tokens: int
     messages: list[PromptMessage]
     metadata: ArticulationPromptMetadata
+    n: int = 1
 
 
 
@@ -150,11 +153,11 @@ class ProcessedArticulationPromptResponse(BaseModel):
     train_rule_names: list[str]
     train_examples: list[str]
     train_labels: list[int]
-    split: Split
+    # split: Split
     answer_options: list[str]
     answer_option_rule_names: list[tuple[str, ...]]
     correct_answer_letters: list[str]
     prompt: str
     prediction_str: str
-    prediction_rules: tuple[Rule]
-    confidence: float
+    model: str
+    # split: Split

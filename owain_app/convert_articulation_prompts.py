@@ -5,6 +5,7 @@ from owain_app.schemas import (
     PromptMessage,
     ArticulationPromptMetadata,
 )
+from random import sample
 
 MODEL_NAME = "gpt-4"
 
@@ -13,6 +14,7 @@ def convert_to_request(prompt: ArticulationPrompt) -> ArticulationPromptRequest:
     return ArticulationPromptRequest(
         model=MODEL_NAME,
         max_tokens=1,
+        n=5,
         messages=[
             PromptMessage(role="user", content=prompt.prompt),
         ],
